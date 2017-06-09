@@ -86,6 +86,9 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
                     tiledTileset.TileCount = GetValueFromAttribute<int>(tilesetElement, "tilecount");
                     tiledTileset.Columns = GetValueFromAttribute<int>(tilesetElement, "columns");
 
+                    var imageElement = tilesetElement.GetElementsByTagName("image").FirstOrDefault();
+                    tiledTileset.Source = GetValueFromAttribute<string>(imageElement, "source");
+
                     // parse optional attributes
                     tiledTileset.Spacing = GetValueFromAttribute<int>(tilesetElement, "spacing");
                     tiledTileset.Margin = GetValueFromAttribute<int>(tilesetElement, "margin");
@@ -389,6 +392,9 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 
         private T GetValueFromAttribute<T>(IElement element, string attribute)
         {
+            if (element == null)
+                return default(T);
+
             var result = element?.Attributes.FirstOrDefault(a => a.Name.Equals(attribute));
             if (result != null)
                 return (T)Convert.ChangeType(result.Value, typeof(T));
@@ -397,6 +403,9 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 
         private Vector2 GetVec2FromAttributes(IElement element, params string[] attributes)
         {
+            if (element == null)
+                return Vector2.Zero;
+
             if (attributes.Length > 2)
                 throw new ArgumentException("There should be only two attributes.");
 

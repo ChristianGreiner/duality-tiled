@@ -93,8 +93,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Converter\GameObjectFromTmx.cs" />
     <Compile Include="EditorPlugin.cs" />
-    <Compile Include="Importers\TmxImporter.cs" />
+    <Compile Include="Importer\TmxImporter.cs" />
     <Compile Include="Misc\ExtensionMethods.cs" />
     <Compile Include="Misc\TiledDecoder.cs" />
     <Compile Include="Parser\ITiledParser.cs" />

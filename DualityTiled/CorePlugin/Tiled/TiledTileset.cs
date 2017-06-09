@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Duality;
+using Duality.Plugins.Tilemaps;
 
 namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
 {
@@ -49,6 +50,16 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
         /// The properties of the tileset.
         /// </summary>
         public List<TiledProperty> Properties { get; set; }
+
+        /// <summary>
+        /// The tileset resource of the duality tilemaps plugin.
+        /// </summary>
+        public ContentRef<Tileset> Tileset { get; set; }
+
+        /// <summary>
+        /// If this tileset is stored in an external TSX (Tile Set XML) file, this attribute refers to that file.
+        /// </summary>
+        public string Source { get; set; }
 
         // TODO: Image, Terraintypes, Tile
     }

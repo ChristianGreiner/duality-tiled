@@ -1,12 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using ChristianGreiner.Duality.Plugins.DualityTiled.Parser;
 using ChristianGreiner.Duality.Plugins.DualityTiled.Tiled;
 using Duality;
 using Duality.Editor.AssetManagement;
+using Duality.Plugins.Tilemaps;
+using Duality.Resources;
+using Duality.Editor;
 
-namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importers
+namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importer
 {
     public class TmxImporter : IAssetImporter
     {
@@ -55,10 +60,64 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importers
 
                             var parser = new TmxParser();
                             parser.ParseMap(ref targetRef, data);
+
+                            ImportTilesets(env, ref targetRef);
                         }
                     }
 
                     env.AddOutput(targetRef, input.Path);
+                }
+            }
+        }
+
+        private void ImportTilesets(IAssetImportEnvironment env, ref ContentRef<TiledMap> map)
+        {
+            if (map.Res.Tilesets.Count > 0)
+            {
+                if (map.Res.Tilesets?.Count > 1)
+                    throw new NotImplementedException("Multiple tilesets are not supported yet.");
+
+                var paths = new List<string>();
+
+                foreach (var tileset in map.Res.Tilesets)
+                {
+                    if (!string.IsNullOrEmpty(tileset.Source))
+                        paths.Add(Path.GetFullPath(Path.Combine(inputBaseDir, tileset.Source)));
+                }
+
+                if (paths.Count > 0)
+                {
+                    AssetManager.ImportAssets(paths, env.TargetDirectory, inputBaseDir);
+
+                    foreach (var tileset in map.Res.Tilesets)
+                    {
+                        foreach (var pixmap in ContentProvider.GetAvailableContent<Pixmap>().Where(p => !p.IsDefaultContent))
+                        {
+                            if (pixmap.Name.Equals(tileset.Name))
+                            {
+                                string targetPath = PathHelper.GetFreePath(pixmap.FullName, Resource.GetFileExtByType<Tileset>());
+
+                                var texture = new Texture(pixmap);
+                                texture.Save(targetPath);
+                                var textureRef = new ContentRef<Texture>(texture);
+                                textureRef.Res.Save(targetPath);
+
+                                var tilesetRes = new Tileset();
+                                tilesetRes.TileSize = map.Res.TileSize;
+                                tilesetRes.RenderConfig.Add(new TilesetRenderInput()
+                                {
+                                    SourceData = pixmap,
+                                    SourceTileSize = new Point2(tileset.TileSize.X, tileset.TileSize.Y),
+                                    SourceTileSpacing = tileset.Spacing,
+                                    TargetTileMargin = tileset.Margin
+                                });
+                                tilesetRes.Compile();
+                                tilesetRes.Save(targetPath);
+
+                                tileset.Tileset = tilesetRes;
+                            }
+                        }
+                    }
                 }
             }
         }
