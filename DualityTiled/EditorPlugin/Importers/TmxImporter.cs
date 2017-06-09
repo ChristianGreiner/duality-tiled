@@ -46,7 +46,6 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importers
 
                 if (targetRef.IsAvailable)
                 {
-                    var target = targetRef.Res;
                     if (!String.IsNullOrWhiteSpace(input.Path))
                     {
                         using (var sr = new StreamReader(input.Path))
@@ -55,7 +54,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importers
                             var data = sr.ReadToEnd();
 
                             var parser = new TmxParser();
-                            targetRef.Res = parser.ParseMap(data);
+                            parser.ParseMap(ref targetRef, data);
                         }
                     }
 

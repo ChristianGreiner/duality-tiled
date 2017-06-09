@@ -57,7 +57,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
 
         // TODO: LIST, LAYER; OBJECTGROUP, IMAGELAYER
 
-        public List<ITiledLayer> Layers { get; set; }
+        public List<ITiledLayer> Layer { get; set; }
 
         /// <summary>
         /// The properties of the map.

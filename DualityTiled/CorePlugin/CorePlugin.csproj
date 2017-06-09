@@ -40,6 +40,7 @@
     <Compile Include="Tiled\TiledCompression.cs" />
     <Compile Include="Tiled\TiledData.cs" />
     <Compile Include="Tiled\TiledDraworder.cs" />
+    <Compile Include="Tiled\TiledEllipse.cs" />
     <Compile Include="Tiled\TiledEncoding.cs" />
     <Compile Include="Tiled\TiledImageLayer.cs" />
     <Compile Include="Tiled\TiledLayer.cs" />
@@ -47,6 +48,8 @@
     <Compile Include="Tiled\TiledObject.cs" />
     <Compile Include="Tiled\TiledObjectgroup.cs" />
     <Compile Include="Tiled\TiledOrientation.cs" />
+    <Compile Include="Tiled\TiledPolygon.cs" />
+    <Compile Include="Tiled\TiledPolyline.cs" />
     <Compile Include="Tiled\TiledProperty.cs" />
     <Compile Include="Tiled\TiledRenderorder.cs" />
     <Compile Include="Tiled\TiledStaggerAxis.cs" />

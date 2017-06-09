@@ -96,6 +96,7 @@
     <Compile Include="EditorPlugin.cs" />
     <Compile Include="Importers\TmxImporter.cs" />
     <Compile Include="Misc\ExtensionMethods.cs" />
+    <Compile Include="Misc\TiledDecoder.cs" />
     <Compile Include="Parser\ITiledParser.cs" />
     <Compile Include="Parser\TmxParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

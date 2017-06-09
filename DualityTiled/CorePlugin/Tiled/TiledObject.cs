@@ -9,7 +9,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
         /// <summary>
         /// Unique ID of the object. Each object that is placed on a map gets a unique id. Even if an object was deleted, no object gets the same ID
         /// </summary>
-        public int Id { get; set; }
+        public uint Id { get; set; }
 
         /// <summary>
         /// The name of the object.
@@ -19,7 +19,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
         /// <summary>
         /// The type of the object.
         /// </summary>
-        public Type Type { get; set; }
+        public string Type { get; set; }
 
         /// <summary>
         /// The x and y coordinate of the object.
