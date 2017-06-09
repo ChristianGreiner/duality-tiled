@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using ChristianGreiner.Duality.Plugins.DualityTiled.Parser;
 using ChristianGreiner.Duality.Plugins.DualityTiled.Tiled;
 using Duality;
 using Duality.Editor.AssetManagement;
@@ -51,7 +52,10 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importers
                         using (var sr = new StreamReader(input.Path))
                         {
                             Log.Editor.Write("[DualityTiled] Importing tilemap...");
-                            var rawData = sr.ReadToEnd();
+                            var data = sr.ReadToEnd();
+
+                            var parser = new TmxParser();
+                            targetRef.Res = parser.ParseMap(data);
                         }
                     }
 

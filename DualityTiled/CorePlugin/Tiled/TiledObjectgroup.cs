@@ -3,7 +3,7 @@ using Duality;
 
 namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
 {
-    public class TiledLayer : ITiledLayer
+    public class TiledObjectgroup : ITiledLayer
     {
         /// <summary>
         /// The name of the layer.
@@ -36,19 +36,25 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
         public Point2 Offset { get; set; }
 
         /// <summary>
-        /// The properties of the layer.
+        /// Whether the objects are drawn according to the order of appearance ("index") or sorted by their y-coordinate ("topdown"). Defaults to "topdown".
+        /// </summary>
+        public TiledDraworder Draworder { get; set; }
+
+        /// <summary>
+        /// Stores all objects of the objectgroup.
+        /// </summary>
+        public List<TiledObject> Objects { get; set; }
+
+        /// <summary>
+        /// The properties of the objectgroup.
         /// </summary>
         public List<TiledProperty> Properties { get; set; }
 
-        /// <summary>
-        /// The data of the layer.
-        /// </summary>
-        public TiledData Data { get; set; }
-
-        public TiledLayer()
+        public TiledObjectgroup()
         {
             Opacity = 1f;
             Visible = true;
+            Draworder = TiledDraworder.Index;
         }
     }
 }

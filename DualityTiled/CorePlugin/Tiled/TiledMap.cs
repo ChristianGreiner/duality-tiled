@@ -16,24 +16,14 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
         public string Version { get; set; }
 
         /// <summary>
-        /// The map width in tiles.
+        /// The map width and height in tiles.
         /// </summary>
-        public int Width { get; set; }
+        public Point2 Size { get; set; }
 
         /// <summary>
-        /// The map height in tiles.
+        /// The width and height of a tile.
         /// </summary>
-        public int Height { get; set; }
-
-        /// <summary>
-        /// The width of a tile.
-        /// </summary>
-        public int TileWidth { get; set; }
-
-        /// <summary>
-        /// The height of a tile.
-        /// </summary>
-        public int TileHeight { get; set; }
+        public Point2 TileSize { get; set; }
 
         /// <summary>
         /// The background color of the map.
@@ -66,6 +56,8 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
         public int HexsideLength { get; set; }
 
         // TODO: LIST, LAYER; OBJECTGROUP, IMAGELAYER
+
+        public List<ITiledLayer> Layers { get; set; }
 
         /// <summary>
         /// The properties of the map.

@@ -95,6 +95,9 @@
   <ItemGroup>
     <Compile Include="EditorPlugin.cs" />
     <Compile Include="Importers\TmxImporter.cs" />
+    <Compile Include="Misc\ExtensionMethods.cs" />
+    <Compile Include="Parser\ITiledParser.cs" />
+    <Compile Include="Parser\TmxParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -104,9 +107,7 @@
   <ItemGroup>
     <Content Include="Ionic.Zip.xml" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Parser\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\CorePlugin\CorePlugin.csproj">
       <Project>{e0673b08-5ffe-4623-aea3-96000424fb3c}</Project>

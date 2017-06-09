@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using Duality;
+using Duality.Resources;
 
 namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
 {
-    public class TiledLayer : ITiledLayer
+    public class TiledImageLayer : ITiledLayer
     {
         /// <summary>
         /// The name of the layer.
@@ -41,11 +42,11 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Tiled
         public List<TiledProperty> Properties { get; set; }
 
         /// <summary>
-        /// The data of the layer.
+        /// The image of the layer
         /// </summary>
-        public TiledData Data { get; set; }
+        public ContentRef<Texture> Image { get; set; }
 
-        public TiledLayer()
+        public TiledImageLayer()
         {
             Opacity = 1f;
             Visible = true;
