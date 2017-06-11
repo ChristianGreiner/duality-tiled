@@ -56,6 +56,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importer
                         using (var sr = new StreamReader(input.Path))
                         {
                             Log.Editor.Write("[DualityTiled] Importing tilemap...");
+                            Log.Editor.Write(input.Path);
                             var data = sr.ReadToEnd();
 
                             var parser = new TmxParser();
@@ -82,7 +83,10 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importer
                 foreach (var tileset in map.Res.Tilesets)
                 {
                     if (!string.IsNullOrEmpty(tileset.Source))
-                        paths.Add(Path.GetFullPath(Path.Combine(inputBaseDir, tileset.Source)));
+                    {
+                        var path = Path.GetFullPath(Path.Combine(inputBaseDir, tileset.Source));
+                        paths.Add(path);
+                    }
                 }
 
                 if (paths.Count > 0)

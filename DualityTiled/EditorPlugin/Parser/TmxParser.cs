@@ -11,7 +11,7 @@ using Duality.Drawing;
 
 namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 {
-    public class TmxParser : ITiledParser
+    public class TmxParser : ITiledParser<string>
     {
         public TiledMap ParseMap(ref ContentRef<TiledMap> contentRef, object data)
         {
@@ -80,6 +80,15 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 
                     // parse attributes
                     tiledTileset.FirstGid = GetValueFromAttribute<int>(tilesetElement, "firstgid");
+
+                    // external tileset?
+                    var source = GetValueFromAttribute<string>(tilesetElement, "source");
+                    if (!string.IsNullOrEmpty(source))
+                    {
+                        Log.Editor.Write("External Tilesetfile: " + source);
+                        // TODO: GET external tileset
+                    }
+
                     tiledTileset.Name = GetValueFromAttribute<string>(tilesetElement, "name");
                     tiledTileset.TileSize = GetVec2FromAttributes(tilesetElement, "tilewidth", "tileheight").ToPoint2();
 

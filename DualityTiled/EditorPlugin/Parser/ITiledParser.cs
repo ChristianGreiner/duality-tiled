@@ -4,7 +4,7 @@ using Duality;
 
 namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 {
-    public interface ITiledParser
+    public interface ITiledParser<T>
     {
         TiledMap ParseMap(ref ContentRef<TiledMap> contentRef, object data);
 
