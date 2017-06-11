@@ -56,11 +56,10 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importer
                         using (var sr = new StreamReader(input.Path))
                         {
                             Log.Editor.Write("[DualityTiled] Importing tilemap...");
-                            Log.Editor.Write(input.Path);
                             var data = sr.ReadToEnd();
 
                             var parser = new TmxParser();
-                            parser.ParseMap(ref targetRef, data);
+                            parser.ParseMap(ref targetRef, inputBaseDir, data);
 
                             ImportTilesets(env, ref targetRef);
                         }

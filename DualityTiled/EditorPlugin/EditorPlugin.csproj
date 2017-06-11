@@ -99,7 +99,6 @@
     <Compile Include="Misc\ExtensionMethods.cs" />
     <Compile Include="Misc\TiledDecoder.cs" />
     <Compile Include="Parser\ITiledParser.cs" />
-    <Compile Include="Parser\TiledParser.cs" />
     <Compile Include="Parser\TmxParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

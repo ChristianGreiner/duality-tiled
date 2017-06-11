@@ -1,25 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using ChristianGreiner.Duality.Plugins.DualityTiled.Tiled;
+using Duality;
+using System;
 using System.IO;
 using System.Linq;
 using AngleSharp.Dom;
 using AngleSharp.Parser.Xml;
 using ChristianGreiner.Duality.Plugins.DualityTiled.Misc;
-using ChristianGreiner.Duality.Plugins.DualityTiled.Tiled;
-using Duality;
-using Duality.Drawing;
 
 namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 {
-    public class TmxParser : ITiledParser<string>
+    public class TmxParser : ITiledParser<IElement>
     {
-        public TiledMap ParseMap(ref ContentRef<TiledMap> contentRef, object data)
+        private string inputPath;
+
+        public TiledMap ParseMap(ref ContentRef<TiledMap> contentRef, string inputPath, string file)
         {
-            if (data == null)
+            if (file == null)
                 throw new NullReferenceException("Data is null!");
 
+            this.inputPath = inputPath;
+
             var xmlParser = new XmlParser();
-            var xmlDocument = xmlParser.Parse((string)data);
+            var xmlDocument = xmlParser.Parse(file);
             var map = contentRef.Res;
 
             var mapElement = xmlDocument.GetElementsByTagName("map").FirstOrDefault();
@@ -65,10 +68,9 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
             return map;
         }
 
-        public List<TiledTileset> ParseTileset(ref ContentRef<TiledMap> contentRef, object data)
+        public List<TiledTileset> ParseTileset(ref ContentRef<TiledMap> contentRef, IElement data)
         {
-            var mapElement = (IElement)data;
-            var tilesetElements = mapElement?.GetElementsByTagName("tileset");
+            var tilesetElements = data?.GetElementsByTagName("tileset");
 
             if (tilesetElements?.Length > 0)
             {
@@ -86,21 +88,22 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
                     if (!string.IsNullOrEmpty(source))
                     {
                         Log.Editor.Write("External Tilesetfile: " + source);
-                        // TODO: GET external tileset
+
+                        using (var sr = new StreamReader(inputPath))
+                        {
+                            Log.Editor.Write("[DualityTiled] Importing external tileset...");
+
+                            var externalTilesetData = sr.ReadToEnd();
+                            var xmlParser = new XmlParser();
+                            var xmlTileset = xmlParser.Parse(externalTilesetData).Children[0];
+                            ParseTilesetAttributes(ref tiledTileset, xmlTileset);
+                            Log.Editor.Write(externalTilesetData);
+                        }
                     }
-
-                    tiledTileset.Name = GetValueFromAttribute<string>(tilesetElement, "name");
-                    tiledTileset.TileSize = GetVec2FromAttributes(tilesetElement, "tilewidth", "tileheight").ToPoint2();
-
-                    tiledTileset.TileCount = GetValueFromAttribute<int>(tilesetElement, "tilecount");
-                    tiledTileset.Columns = GetValueFromAttribute<int>(tilesetElement, "columns");
-
-                    var imageElement = tilesetElement.GetElementsByTagName("image").FirstOrDefault();
-                    tiledTileset.Source = GetValueFromAttribute<string>(imageElement, "source");
-
-                    // parse optional attributes
-                    tiledTileset.Spacing = GetValueFromAttribute<int>(tilesetElement, "spacing");
-                    tiledTileset.Margin = GetValueFromAttribute<int>(tilesetElement, "margin");
+                    else
+                    {
+                        ParseTilesetAttributes(ref tiledTileset, tilesetElement);
+                    }
 
                     // TODO: image element
 
@@ -113,13 +116,27 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
             return contentRef.Res.Tilesets;
         }
 
-        public List<ITiledLayer> ParseLayer(ref ContentRef<TiledMap> contentRef, object data)
+        private void ParseTilesetAttributes(ref TiledTileset tiledTileset, IElement xmlTileset)
         {
-            var mapElement = (IElement)data;
+            tiledTileset.Name = GetValueFromAttribute<string>(xmlTileset, "name");
+            tiledTileset.TileSize = GetVec2FromAttributes(xmlTileset, "tilewidth", "tileheight").ToPoint2();
 
+            tiledTileset.TileCount = GetValueFromAttribute<int>(xmlTileset, "tilecount");
+            tiledTileset.Columns = GetValueFromAttribute<int>(xmlTileset, "columns");
+
+            var imageElement = xmlTileset.GetElementsByTagName("image").FirstOrDefault();
+            tiledTileset.Source = GetValueFromAttribute<string>(imageElement, "source");
+
+            // parse optional attributes
+            tiledTileset.Spacing = GetValueFromAttribute<int>(xmlTileset, "spacing");
+            tiledTileset.Margin = GetValueFromAttribute<int>(xmlTileset, "margin");
+        }
+
+        public List<ITiledLayer> ParseLayer(ref ContentRef<TiledMap> contentRef, IElement data)
+        {
             contentRef.Res.Layer = new List<ITiledLayer>();
 
-            foreach (var childElement in mapElement.Children)
+            foreach (var childElement in data.Children)
             {
                 if (childElement.TagName.Equals("group"))
                 {
@@ -238,14 +255,13 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
             return points;
         }
 
-        public TiledData EncodeData(object data, Point2 gridSize)
+        public TiledData EncodeData(IElement data, Point2 gridSize)
         {
-            var dataElement = (IElement)data;
-            var rawData = dataElement.InnerHtml;
+            var rawData = data.InnerHtml;
 
             // get encoding
-            var encoding = GetValueFromAttribute<string>(dataElement, "encoding");
-            var compression = GetValueFromAttribute<string>(dataElement, "compression");
+            var encoding = GetValueFromAttribute<string>(data, "encoding");
+            var compression = GetValueFromAttribute<string>(data, "compression");
 
             var tiledEncoding = TiledEncoding.Base64;
             var tiledCompression = TiledCompression.None;
@@ -258,7 +274,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
                 case null:
                     tiledEncoding = TiledEncoding.Xml;
 
-                    foreach (var child in dataElement.Children)
+                    foreach (var child in data.Children)
                     {
                         if (child.TagName.Equals("tile"))
                             idList.Add(GetValueFromAttribute<uint>(child, "gid"));
@@ -316,7 +332,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
             };
         }
 
-        public List<TiledProperty> ParseProperties(object data)
+        public List<TiledProperty> ParseProperties(IElement data)
         {
             if (data != null)
             {
@@ -399,17 +415,6 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
             layer.Properties = ParseProperties(propertiesElement);
         }
 
-        private T GetValueFromAttribute<T>(IElement element, string attribute)
-        {
-            if (element == null)
-                return default(T);
-
-            var result = element?.Attributes.FirstOrDefault(a => a.Name.Equals(attribute));
-            if (result != null)
-                return (T)Convert.ChangeType(result.Value, typeof(T));
-            return default(T);
-        }
-
         private Vector2 GetVec2FromAttributes(IElement element, params string[] attributes)
         {
             if (element == null)
@@ -421,6 +426,17 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
             var valueA = GetValueFromAttribute<float>(element, attributes[0]);
             var valueB = GetValueFromAttribute<float>(element, attributes[1]);
             return new Vector2(valueA, valueB);
+        }
+
+        private T GetValueFromAttribute<T>(IElement element, string attribute)
+        {
+            if (element == null)
+                return default(T);
+
+            var result = element?.Attributes.FirstOrDefault(a => a.Name.Equals(attribute));
+            if (result != null)
+                return (T)Convert.ChangeType(result.Value, typeof(T));
+            return default(T);
         }
     }
 }
