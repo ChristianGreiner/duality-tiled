@@ -10,6 +10,8 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 
         string RawData { get; }
 
+        string InputPath { get; }
+
         void Parse();
 
         List<TiledTileset> ParseTilesets(T data);

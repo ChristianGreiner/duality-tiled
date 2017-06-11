@@ -16,10 +16,13 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 
         public string RawData { get; }
 
-        public TmxParser(ref ContentRef<TiledMap> contentRef, string rawData)
+        public string InputPath { get; }
+
+        public TmxParser(ref ContentRef<TiledMap> contentRef, string rawData, string inputPath)
         {
             Tilemap = contentRef;
             RawData = rawData;
+            InputPath = inputPath;
         }
 
         public void Parse()
@@ -63,8 +66,11 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
             Tilemap.Res.Properties = ParseProperties(properties);
 
             // check if map uses an external tileset file
-
+            Tilemap.Res.Tilesets = ParseTilesets(mapElement);
             Tilemap.Res.Layer = ParseTiledLayers(mapElement);
+
+            // TODO: Layer not sorted correctly
+            Tilemap.Res.Layer.Reverse();
         }
 
         public List<TiledTileset> ParseTilesets(IElement data)
@@ -78,6 +84,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
                 foreach (var element in tilesetElements)
                 {
                     var tileset = new TiledTileset();
+
                     // parse attributes
                     tileset.FirstGid = GetValueFromAttribute<int>(element, "firstgid");
 
@@ -85,9 +92,20 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
                     var source = GetValueFromAttribute<string>(element, "source");
                     if (!string.IsNullOrEmpty(source))
                     {
+                        Log.Editor.Write("Read external tileset...");
                         // open external tileset
-                    }
+                        string extTilesetData;
+                        using (var sr = new StreamReader(Path.Combine(InputPath, source)))
+                            extTilesetData = sr.ReadToEnd();
 
+                        var parser = new XmlParser();
+                        var extTilesetElement = parser.Parse(extTilesetData).FirstElementChild;
+                        ParseTilesetAttributes(ref tileset, extTilesetElement);
+                    }
+                    else
+                    {
+                        ParseTilesetAttributes(ref tileset, element);
+                    }
                     // TODO: image element, parse custom tile properties
 
                     tilesets.Add(tileset);
@@ -101,7 +119,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
             return tilesets;
         }
 
-        private void ParseTilesetAttributes(TiledTileset tileset, IElement xmlTileset)
+        private void ParseTilesetAttributes(ref TiledTileset tileset, IElement xmlTileset)
         {
             tileset.Name = GetValueFromAttribute<string>(xmlTileset, "name");
             tileset.TileSize = GetVec2FromAttributes(xmlTileset, "tilewidth", "tileheight").ToPoint2();

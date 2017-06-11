@@ -48,21 +48,22 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importer
             foreach (var input in env.Input)
             {
                 var targetRef = env.GetOutput<TiledMap>(input.AssetName);
-
+                Log.Editor.Write("InputBaseDir: " + inputBaseDir);
+                Log.Editor.Write("Path: " + input.Path);
+                Log.Editor.Write("RelativePath: " + input.RelativePath);
                 if (targetRef.IsAvailable)
                 {
                     if (!String.IsNullOrWhiteSpace(input.Path))
                     {
+                        string rawData;
+                        Log.Editor.Write("[DualityTiled] Importing tilemap...");
                         using (var sr = new StreamReader(input.Path))
-                        {
-                            Log.Editor.Write("[DualityTiled] Importing tilemap...");
-                            var rawData = sr.ReadToEnd();
+                            rawData = sr.ReadToEnd();
 
-                            var parser = new TmxParser(ref targetRef, rawData);
-                            parser.Parse();
+                        var tmxParser = new TmxParser(ref targetRef, rawData, inputBaseDir);
+                        tmxParser.Parse();
 
-                            //ImportTilesets(env, ref targetRef);
-                        }
+                        ImportTilesets(env, ref targetRef);
                     }
 
                     env.AddOutput(targetRef, input.Path);
@@ -82,10 +83,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importer
                 foreach (var tileset in map.Res.Tilesets)
                 {
                     if (!string.IsNullOrEmpty(tileset.Source))
-                    {
-                        var path = Path.GetFullPath(Path.Combine(inputBaseDir, tileset.Source));
-                        paths.Add(path);
-                    }
+                        paths.Add(Path.GetFullPath(Path.Combine(inputBaseDir, tileset.Source)));
                 }
 
                 if (paths.Count > 0)
@@ -141,9 +139,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Importer
                 if (!string.IsNullOrWhiteSpace(outputPath))
                 {
                     using (var sw = new StreamWriter(outputPath, false, Encoding.UTF8))
-                    {
                         sw.Write(input);
-                    }
                 }
             }
         }
