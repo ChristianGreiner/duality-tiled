@@ -52,7 +52,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Converter
                         layerGameObj.AddComponent<Transform>();
                         layerGameObj.Transform.Pos = Vector3.Zero;
 
-                        if (layerType == typeof(TiledLayer))
+                        if (layerType == typeof(TiledLayer) && tiledMap.Tilesets != null)
                         {
                             var dataLayer = (TiledLayer)layer;
                             var tilemap = layerGameObj.AddComponent<Tilemap>();

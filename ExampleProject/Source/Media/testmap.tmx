@@ -6,14 +6,16 @@
    eJzt1zsOgCAQBFAo/RV+G8VOD2Np6f0P4pQ0xgQXHJIt3pQyQUgWa4yxSlSBKO3/PZ60iI64n28j7en3kuxYIWpoBL4ZY+96xAAjTIQdZ8QCDlahfqxnMOZ/lu7nS7n2Qe5Un1zk3s7nTn53lVIqR5KzdAwhs3TKt2XILJ3T21Ll7wZdBDtv
   </data>
  </layer>
- <layer name="Layer02" width="40" height="30">
-  <data encoding="base64" compression="zlib">
+ <group name="TestGroup">
+  <layer name="Layer02" width="40" height="30" opacity="0.7">
+   <data encoding="base64" compression="zlib">
    eJxjYBgF5ADmgXYAjQA2f3HT3RWUA3LiZ7jG6SgYXoDc/EjP9C1KofpKIK6ikluwAVkK1TcCcROJZpAaJvQGpIbJYAfkhrcYEWoSyTQbGZAb3nJEqMkk02x6gcHuvsKBdgAWMFTbJ8TWV0OxnUkJGGz1AXr4D7f6YCDAUM2z9ALDIc+PxjH9ASzMAQKYBSY=
   </data>
- </layer>
- <layer name="Layer03" width="40" height="30">
-  <data encoding="base64" compression="zlib">
+  </layer>
+  <layer name="Layer03" width="40" height="30">
+   <data encoding="base64" compression="zlib">
    eJztwTEBAAAAwqD1T20ND6AAAAAA4NcAEsAAAQ==
   </data>
- </layer>
+  </layer>
+ </group>
 </map>

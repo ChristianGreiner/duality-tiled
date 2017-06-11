@@ -12,231 +12,253 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 {
     public class TmxParser : ITiledParser<IElement>
     {
-        private string inputPath;
+        public ContentRef<TiledMap> Tilemap { get; }
 
-        public TiledMap ParseMap(ref ContentRef<TiledMap> contentRef, string inputPath, string file)
+        public string RawData { get; }
+
+        public TmxParser(ref ContentRef<TiledMap> contentRef, string rawData)
         {
-            if (file == null)
-                throw new NullReferenceException("Data is null!");
+            Tilemap = contentRef;
+            RawData = rawData;
+        }
 
-            this.inputPath = inputPath;
+        public void Parse()
+        {
+            if (!Tilemap.IsAvailable) return;
 
             var xmlParser = new XmlParser();
-            var xmlDocument = xmlParser.Parse(file);
-            var map = contentRef.Res;
+            var xmlDocument = xmlParser.Parse(RawData);
+            var mapElement = xmlDocument.FirstElementChild;
 
-            var mapElement = xmlDocument.GetElementsByTagName("map").FirstOrDefault();
-
-            if (mapElement == null)
-                throw new NullReferenceException("Map format is invalid.");
-
-            map.Version = GetValueFromAttribute<string>(mapElement, "version");
-            map.Size = GetVec2FromAttributes(mapElement, "width", "height").ToPoint2();
-            map.TileSize = GetVec2FromAttributes(mapElement, "tilewidth", "tileheight").ToPoint2();
+            Tilemap.Res.Version = GetValueFromAttribute<string>(mapElement, "version");
+            Tilemap.Res.Size = GetVec2FromAttributes(mapElement, "width", "height").ToPoint2();
+            Tilemap.Res.TileSize = GetVec2FromAttributes(mapElement, "tilewidth", "tileheight").ToPoint2();
 
             var renderorder = GetValueFromAttribute<string>(mapElement, "renderorder");
             switch (renderorder)
             {
                 case "right-down":
-                    map.Renderorder = TiledRenderorder.RightDown;
+                    Tilemap.Res.Renderorder = TiledRenderorder.RightDown;
                     break;
 
                 case "right-up":
-                    map.Renderorder = TiledRenderorder.RightUp;
+                    Tilemap.Res.Renderorder = TiledRenderorder.RightUp;
                     break;
 
                 case "left-down":
-                    map.Renderorder = TiledRenderorder.LeftDown;
+                    Tilemap.Res.Renderorder = TiledRenderorder.LeftDown;
                     break;
 
                 case "left-up":
-                    map.Renderorder = TiledRenderorder.LeftUp;
+                    Tilemap.Res.Renderorder = TiledRenderorder.LeftUp;
                     break;
             }
 
             // TODO: StaggerAxis, StaggerIndex
 
-            map.NextObjectId = GetValueFromAttribute<int>(mapElement, "nextobjectid");
+            Tilemap.Res.NextObjectId = GetValueFromAttribute<int>(mapElement, "nextobjectid");
 
             // (optional) map properties
             var properties = mapElement.GetElementsByTagName("properties").FirstOrDefault();
-            map.Properties = ParseProperties(properties);
+            Tilemap.Res.Properties = ParseProperties(properties);
 
-            ParseTileset(ref contentRef, mapElement);
-            ParseLayer(ref contentRef, mapElement);
+            // check if map uses an external tileset file
 
-            return map;
+            Tilemap.Res.Layer = ParseTiledLayers(mapElement);
         }
 
-        public List<TiledTileset> ParseTileset(ref ContentRef<TiledMap> contentRef, IElement data)
+        public List<TiledTileset> ParseTilesets(IElement data)
         {
             var tilesetElements = data?.GetElementsByTagName("tileset");
 
+            List<TiledTileset> tilesets = new List<TiledTileset>();
+
             if (tilesetElements?.Length > 0)
             {
-                contentRef.Res.Tilesets = new List<TiledTileset>();
-
-                foreach (var tilesetElement in tilesetElements)
+                foreach (var element in tilesetElements)
                 {
-                    var tiledTileset = new TiledTileset();
-
+                    var tileset = new TiledTileset();
                     // parse attributes
-                    tiledTileset.FirstGid = GetValueFromAttribute<int>(tilesetElement, "firstgid");
+                    tileset.FirstGid = GetValueFromAttribute<int>(element, "firstgid");
 
                     // external tileset?
-                    var source = GetValueFromAttribute<string>(tilesetElement, "source");
+                    var source = GetValueFromAttribute<string>(element, "source");
                     if (!string.IsNullOrEmpty(source))
                     {
-                        Log.Editor.Write("External Tilesetfile: " + source);
-
-                        using (var sr = new StreamReader(inputPath))
-                        {
-                            Log.Editor.Write("[DualityTiled] Importing external tileset...");
-
-                            var externalTilesetData = sr.ReadToEnd();
-                            var xmlParser = new XmlParser();
-                            var xmlTileset = xmlParser.Parse(externalTilesetData).Children[0];
-                            ParseTilesetAttributes(ref tiledTileset, xmlTileset);
-                            Log.Editor.Write(externalTilesetData);
-                        }
-                    }
-                    else
-                    {
-                        ParseTilesetAttributes(ref tiledTileset, tilesetElement);
+                        // open external tileset
                     }
 
-                    // TODO: image element
+                    // TODO: image element, parse custom tile properties
 
-                    // TODO: parse custom tile properties
-
-                    contentRef.Res.Tilesets.Add(tiledTileset);
+                    tilesets.Add(tileset);
                 }
             }
 
-            return contentRef.Res.Tilesets;
+            // apply tilset to content ref
+            if (Tilemap.IsAvailable)
+                Tilemap.Res.Tilesets = tilesets;
+
+            return tilesets;
         }
 
-        private void ParseTilesetAttributes(ref TiledTileset tiledTileset, IElement xmlTileset)
+        private void ParseTilesetAttributes(TiledTileset tileset, IElement xmlTileset)
         {
-            tiledTileset.Name = GetValueFromAttribute<string>(xmlTileset, "name");
-            tiledTileset.TileSize = GetVec2FromAttributes(xmlTileset, "tilewidth", "tileheight").ToPoint2();
+            tileset.Name = GetValueFromAttribute<string>(xmlTileset, "name");
+            tileset.TileSize = GetVec2FromAttributes(xmlTileset, "tilewidth", "tileheight").ToPoint2();
 
-            tiledTileset.TileCount = GetValueFromAttribute<int>(xmlTileset, "tilecount");
-            tiledTileset.Columns = GetValueFromAttribute<int>(xmlTileset, "columns");
+            tileset.TileCount = GetValueFromAttribute<int>(xmlTileset, "tilecount");
+            tileset.Columns = GetValueFromAttribute<int>(xmlTileset, "columns");
 
             var imageElement = xmlTileset.GetElementsByTagName("image").FirstOrDefault();
-            tiledTileset.Source = GetValueFromAttribute<string>(imageElement, "source");
+            tileset.Source = GetValueFromAttribute<string>(imageElement, "source");
 
             // parse optional attributes
-            tiledTileset.Spacing = GetValueFromAttribute<int>(xmlTileset, "spacing");
-            tiledTileset.Margin = GetValueFromAttribute<int>(xmlTileset, "margin");
+            tileset.Spacing = GetValueFromAttribute<int>(xmlTileset, "spacing");
+            tileset.Margin = GetValueFromAttribute<int>(xmlTileset, "margin");
         }
 
-        public List<ITiledLayer> ParseLayer(ref ContentRef<TiledMap> contentRef, IElement data)
+        public List<ITiledLayer> ParseTiledLayers(IElement data)
         {
-            contentRef.Res.Layer = new List<ITiledLayer>();
+            var layerList = new List<ITiledLayer>();
 
-            foreach (var childElement in data.Children)
+            foreach (var child in data.Children)
             {
-                if (childElement.TagName.Equals("group"))
+                // check if layer are stored in a group
+                if (child.TagName.Equals("group"))
                 {
-                    foreach (var groupElement in childElement.Children)
-                        ParseLayerTypes(ref contentRef, groupElement);
+                    foreach (var groupElement in child.Children)
+                    {
+                        var groupLayer = ParseLayer(groupElement);
+                        if (groupLayer != null)
+                            layerList.Add(groupLayer);
+                    }
                 }
-                else
-                    ParseLayerTypes(ref contentRef, childElement);
+
+                var layer = ParseLayer(child);
+                if (layer != null)
+                    layerList.Add(layer);
             }
 
-            return contentRef.Res.Layer;
+            return layerList;
         }
 
-        private void ParseLayerTypes(ref ContentRef<TiledMap> contentRef, IElement xmlElement)
+        private ITiledLayer ParseLayer(IElement data)
         {
-            if (xmlElement.TagName.Equals("layer"))
-                contentRef.Res.Layer.Add(ParseTiledLayer(xmlElement));
+            if (data.TagName.Equals("layer"))
+                return ParseTiledLayer(data);
 
-            if (xmlElement.TagName.Equals("objectgroup"))
+            if (data.TagName.Equals("objectgroup"))
             {
-                contentRef.Res.Layer.Add(ParseObjectgroup(xmlElement));
+                return ParseObjectgroup(data);
             }
 
-            if (xmlElement.TagName.Equals("imagelayer"))
+            if (data.TagName.Equals("imagelayer"))
             {
                 throw new NotImplementedException("Imageslayer are not supported yet.");
             }
+
+            return null;
         }
 
-        private ITiledLayer ParseTiledLayer(IElement xmlElement)
+        /// <summary>
+        /// Parse a single layer with tile data.
+        /// </summary>
+        /// <param name="data">The xml element.</param>
+        /// <returns>The layer.</returns>
+        public TiledLayer ParseTiledLayer(IElement data)
         {
             var layer = new TiledLayer();
 
-            ParseDefaultLayerAttributes(xmlElement, layer);
-            layer.Properties = ParseProperties(xmlElement);
+            ParseDefaultLayerAttributes(data, layer);
 
             // layer data
-            var dataElement = xmlElement.GetElementsByTagName("data").FirstOrDefault();
+            var dataElement = data.GetElementsByTagName("data").FirstOrDefault();
             if (dataElement != null)
-            {
                 layer.Data = EncodeData(dataElement, layer.Size);
-            }
 
             return layer;
         }
 
-        private ITiledLayer ParseObjectgroup(IElement xmlElement)
+        public TiledObjectgroup ParseObjectgroup(IElement data)
         {
             var group = new TiledObjectgroup();
 
-            ParseDefaultLayerAttributes(xmlElement, group);
-            group.Properties = ParseProperties(xmlElement);
+            ParseDefaultLayerAttributes(data, group);
 
             // parse objects
-            var objectElements = xmlElement.GetElementsByTagName("object");
+            var objectElements = data.GetElementsByTagName("object");
             if (objectElements != null)
             {
-                group.Objects = new List<TiledObject>();
-
                 foreach (var objectElement in objectElements)
                 {
-                    TiledObject tiledObj = null;
-
-                    // check if object is a polygon
-                    var polygonElement = objectElement.GetElementsByTagName("polygon").FirstOrDefault();
-                    if (polygonElement != null)
-                    {
-                        tiledObj = new TiledPolygon();
-                        var polygonObject = (TiledPolygon)tiledObj;
-                        polygonObject.Points = GetPolyPoints(polygonElement);
-                    }
-
-                    var ellipseElement = objectElement.GetElementsByTagName("ellipse").FirstOrDefault();
-                    if (ellipseElement != null)
-                    {
-                        tiledObj = new TiledEllipse();
-                    }
-
-                    var polylineElement = objectElement.GetElementsByTagName("polyline").FirstOrDefault();
-                    if (polylineElement != null)
-                    {
-                        tiledObj = new TiledPolyline();
-                        var polylineObject = (TiledPolyline)tiledObj;
-                        polylineObject.Points = GetPolyPoints(polygonElement);
-                    }
-
-                    if (tiledObj != null)
-                    {
-                        tiledObj.Id = GetValueFromAttribute<uint>(objectElement, "id");
-                        tiledObj.Name = GetValueFromAttribute<string>(objectElement, "name");
-                        tiledObj.Type = GetValueFromAttribute<string>(objectElement, "type");
-                        tiledObj.Size = GetVec2FromAttributes(objectElement, "width", "height");
-                        tiledObj.Position = GetVec2FromAttributes(objectElement, "x", "y");
-
-                        group.Objects.Add(tiledObj);
-                    }
+                    var obj = ParseTiledObject(objectElement);
+                    if (obj != null)
+                        group.Objects.Add(obj);
                 }
             }
 
             return group;
+        }
+
+        private void ParseDefaultLayerAttributes(IElement xmlElement, ITiledLayer layer)
+        {
+            // name
+            layer.Name = GetValueFromAttribute<string>(xmlElement, "name");
+
+            // size
+            layer.Size = GetVec2FromAttributes(xmlElement, "width", "height").ToPoint2();
+
+            // opacity
+            var opacityValue = xmlElement?.Attributes.FirstOrDefault(a => a.Name.Equals("opacity"))?.Value;
+            if (opacityValue != null)
+                layer.Opacity = float.Parse(opacityValue);
+
+            // offset
+            layer.Offset = GetVec2FromAttributes(xmlElement, "offsetx", "offsety").ToPoint2();
+
+            // properties
+            var propertiesElement = xmlElement?.GetElementsByTagName("properties").FirstOrDefault();
+            if (propertiesElement != null)
+                layer.Properties = ParseProperties(propertiesElement);
+        }
+
+        public TiledObject ParseTiledObject(IElement data)
+        {
+            TiledObject tiledObj = null;
+
+            // check if object is a polygon
+            var polygonElement = data.GetElementsByTagName("polygon").FirstOrDefault();
+            if (polygonElement != null)
+            {
+                tiledObj = new TiledPolygon();
+                var polygonObject = (TiledPolygon)tiledObj;
+                polygonObject.Points = GetPolyPoints(polygonElement);
+            }
+
+            var ellipseElement = data.GetElementsByTagName("ellipse").FirstOrDefault();
+            if (ellipseElement != null)
+            {
+                tiledObj = new TiledEllipse();
+            }
+
+            var polylineElement = data.GetElementsByTagName("polyline").FirstOrDefault();
+            if (polylineElement != null)
+            {
+                tiledObj = new TiledPolyline();
+                var polylineObject = (TiledPolyline)tiledObj;
+                polylineObject.Points = GetPolyPoints(polygonElement);
+            }
+
+            if (tiledObj != null)
+            {
+                tiledObj.Id = GetValueFromAttribute<uint>(data, "id");
+                tiledObj.Name = GetValueFromAttribute<string>(data, "name");
+                tiledObj.Type = GetValueFromAttribute<string>(data, "type");
+                tiledObj.Size = GetVec2FromAttributes(data, "width", "height");
+                tiledObj.Position = GetVec2FromAttributes(data, "x", "y");
+            }
+
+            return tiledObj;
         }
 
         private List<Vector2> GetPolyPoints(IElement polygonElement)
@@ -337,9 +359,7 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
             if (data != null)
             {
                 var properties = new List<TiledProperty>();
-                var propertiesElement = (IElement)data;
-
-                foreach (var property in propertiesElement.Children)
+                foreach (var property in data.Children)
                 {
                     var xmlName = GetValueFromAttribute<string>(property, "name");
                     var xmlTypeName = GetValueFromAttribute<string>(property, "type");
@@ -392,29 +412,6 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
             return null;
         }
 
-        private void ParseDefaultLayerAttributes(IElement xmlElement, ITiledLayer layer)
-        {
-            // name
-            layer.Name = GetValueFromAttribute<string>(xmlElement, "name");
-
-            // size
-            layer.Size = GetVec2FromAttributes(xmlElement, "width", "height").ToPoint2();
-
-            // opacity
-            var opacityValue = xmlElement?.Attributes.FirstOrDefault(a => a.Name.Equals("opacity"))?.Value;
-            var opacity = 1.0f;
-            if (opacityValue != null)
-                opacity = float.Parse(opacityValue);
-            layer.Opacity = opacity;
-
-            // offset
-            layer.Offset = GetVec2FromAttributes(xmlElement, "offsetx", "offsety").ToPoint2();
-
-            // properties
-            var propertiesElement = xmlElement?.GetElementsByTagName("properties").FirstOrDefault();
-            layer.Properties = ParseProperties(propertiesElement);
-        }
-
         private Vector2 GetVec2FromAttributes(IElement element, params string[] attributes)
         {
             if (element == null)
@@ -430,9 +427,6 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 
         private T GetValueFromAttribute<T>(IElement element, string attribute)
         {
-            if (element == null)
-                return default(T);
-
             var result = element?.Attributes.FirstOrDefault(a => a.Name.Equals(attribute));
             if (result != null)
                 return (T)Convert.ChangeType(result.Value, typeof(T));

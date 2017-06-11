@@ -6,13 +6,21 @@ namespace ChristianGreiner.Duality.Plugins.DualityTiled.Parser
 {
     public interface ITiledParser<T>
     {
-        TiledMap ParseMap(ref ContentRef<TiledMap> contentRef, string inputPath, string file);
+        ContentRef<TiledMap> Tilemap { get; }
 
-        List<ITiledLayer> ParseLayer(ref ContentRef<TiledMap> contentRef, T data);
+        string RawData { get; }
 
-        List<TiledTileset> ParseTileset(ref ContentRef<TiledMap> contentRef, T data);
+        void Parse();
 
-        TiledData EncodeData(T data, Point2 gridSize);
+        List<TiledTileset> ParseTilesets(T data);
+
+        List<ITiledLayer> ParseTiledLayers(T data);
+
+        TiledLayer ParseTiledLayer(T data);
+
+        TiledObjectgroup ParseObjectgroup(T data);
+
+        TiledObject ParseTiledObject(T data);
 
         List<TiledProperty> ParseProperties(T data);
     }
